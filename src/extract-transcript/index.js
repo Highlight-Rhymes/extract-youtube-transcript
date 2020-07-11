@@ -1,7 +1,8 @@
 'use strict'
+
 const puppeteer = require('puppeteer');
-const fs = require('fs');
-const path = require('path');
+const { saveToPath } = require('../utils');
+const toSRT = require('../format-srt');
 
 /**
  * Os erros abaixo não estão tratados
@@ -17,19 +18,13 @@ const selectors = {
   intervalDataDiv: 'div[class="cue-group style-scope ytd-transcript-body-renderer"]' // divs cujo innerText são as traduções
 }
 
-const YOUTUBE_URLS = [
-  'https://www.youtube.com/watch?v=FmXIiQBmW18',
-  'https://www.youtube.com/watch?v=WILNIXZr2oc'
-] // urls do youtube que o puppeteer vai crawlear atrás dos transcripts
-const DEST_PATH = path.join('.') // caminho para salvar os transcritos 
-
 /**
  * 
  * @param {string} url 
  * @returns {Promise<{ transcript: string, title: string }>} pageInfo
  * @property 
  */
-const extractFromUrl = async url => {
+exports.extractFromUrl = async url => {
   try {
     const browser = await puppeteer.launch()
     const page = await browser.newPage();
@@ -63,38 +58,24 @@ const extractFromUrl = async url => {
 
 /**
  * 
- * @param {string} content string para salvar
- * @param {string} p caminho destino
- */
-const saveToPath = (content, p) => {
-  try {
-    const dirPath = path.dirname(p)
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(p);
-    }
-    fs.writeFileSync(p, content);
-  } catch(err) {
-    throw err;
-  }
-}
-/**
- * 
  * @param {string[]} urls
  * @param {string} path
  */
 const extractFromUrlArray = async (urls, path) => {
   try {
     for (const url of urls) {
-      await extractFromUrl(url)
-        .then(({ title, transcript }) => Promise.resolve(saveToPath(transcript, path + title)))
+      await exports.extractFromUrl(url)
+        .then(({ title, transcript }) => Promise.resolve(
+            saveToPath(
+              toSRT(transcript), // convert transcript from html to .srt format
+              path + title + '.srt'
+            )
+          )
+        )
     }
   } catch(err) {
     throw err;
   }
 }
 
-extractFromUrlArray(YOUTUBE_URLS, DEST_PATH)
-  .then(_ => console.log("fim"))
-  .catch(err => {
-    throw err; 
-  })
+module.exports = extractFromUrlArray;
