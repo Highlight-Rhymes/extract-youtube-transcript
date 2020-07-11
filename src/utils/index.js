@@ -24,13 +24,13 @@ const saveToPath = (content, p) => {
  * @param {string} time formatted as mm:ss or hh:mm:ss 
  */
 const toStringWithMs = time => {
-  const camps = time.split(":");
+  const camps = time.split(":").reverse();
   const hasHour = camps.length > 2;
 
   let hh, mm, ss;
   
-  mm = camps[0];
-  ss = camps[1];
+  mm = camps[1];
+  ss = camps[0];
 
   if (hasHour)
     hh = camps[2];
